@@ -1,60 +1,36 @@
 import streamlit as st
+import requests
 
-# --- KRITERIA: OOP ---
-class Produk:
-    def __init__(self, kode, nama, harga):
-        self.kode = kode
-        self.nama = nama
-        self.harga = harga
+# URL Server API (Soal No. 2)
+URL_API = "http://127.0.0.1:5000/api/barang"
 
-# --- KRITERIA: FUNCTION & STRING ---
-def format_rupiah(nominal):
-    return f"Rp{nominal:,}"
+st.title("🏪 UAS Toko Elektronik (Client Side)")
 
-# Inisialisasi List (KRITERIA: LIST)
-if 'katalog' not in st.session_state:
-    st.session_state.katalog = [
-        Produk("L01", "Laptop Gaming", 15000000),
-        Produk("H02", "Smartphone S23", 12000000),
-        Produk("T03", "Smart TV 4K", 5000000)
-    ]
+# Fungsi mengambil data dari server
+def fetch_data():
+    try:
+        response = requests.get(URL_API)
+        return response.json()
+    except:
+        return None
 
-st.title("🏪 UAS Toko Elektronik")
+menu = st.sidebar.selectbox("Navigasi", ["Katalog Server", "Tambah ke Server"])
 
-# --- KRITERIA: PERCABANGAN (Menu via Sidebar) ---
-menu = st.sidebar.selectbox("Navigasi Menu", ["Lihat Katalog", "Tambah Produk Baru"])
+if menu == "Katalog Server":
+    st.header("Data Produk dari Server")
+    data = fetch_data()
+    if data:
+        st.table(data)
+    else:
+        st.error("Server belum jalan! Jalankan server.py di terminal dulu.")
 
-if menu == "Lihat Katalog":
-    st.header("Katalog Produk Saat Ini")
-    
-    # Menampilkan data dalam bentuk tabel agar rapi
-    data_tabel = []
-    # --- KRITERIA: PERULANGAN ---
-    for p in st.session_state.katalog:
-        data_tabel.append({
-            "Kode": p.kode.upper(), # KRITERIA: STRING
-            "Nama Produk": p.nama,
-            "Harga": format_rupiah(p.harga)
-        })
-    st.table(data_tabel)
-
-elif menu == "Tambah Produk Baru":
-    st.header("Input Data Elektronik")
-    
-    # Mengganti input() terminal dengan widget Streamlit
+elif menu == "Tambah ke Server":
+    st.header("Input Barang Baru")
     with st.form("form_input"):
-        new_kode = st.text_input("Masukkan Kode (Contoh: B01)")
-        new_nama = st.text_input("Nama Barang")
-        new_harga = st.number_input("Harga Barang", min_value=0)
-        
-        submit = st.form_submit_button("Simpan Barang")
-        
-        if submit:
-            if new_kode and new_nama:
-                # Membuat objek baru (OOP)
-                produk_baru = Produk(new_kode, new_nama, new_harga)
-                # Menambah ke list
-                st.session_state.katalog.append(produk_baru)
-                st.success(f"Barang '{new_nama}' berhasil ditambahkan!")
-            else:
-                st.error("Semua kolom harus diisi!")
+        kode = st.text_input("Kode")
+        nama = st.text_input("Nama")
+        harga = st.number_input("Harga", min_value=0)
+        if st.form_submit_button("Kirim ke Server"):
+            payload = {"kode": kode, "nama": nama, "harga": harga}
+            res = requests.post(URL_API, json=payload)
+            st.success(res.json()['pesan'])
