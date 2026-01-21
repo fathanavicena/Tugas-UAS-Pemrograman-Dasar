@@ -1,76 +1,60 @@
-# --- KRITERIA: OOP (Object-Oriented Programming) ---
-class ProdukElektronik:
-    def __init__(self, kode, nama, kategori, harga):
+import streamlit as st
+
+# --- KRITERIA: OOP ---
+class Produk:
+    def __init__(self, kode, nama, harga):
         self.kode = kode
         self.nama = nama
-        self.kategori = kategori
         self.harga = harga
 
-    # Method untuk memformat data produk (KRITERIA: STRING & FUNCTION)
-    def detail_produk(self):
-        # Menggunakan f-string dan method string .upper() serta .title()
-        return f"[{self.kode.upper()}] {self.nama.title()} ({self.kategori}) - Rp{self.harga:,}"
+# --- KRITERIA: FUNCTION & STRING ---
+def format_rupiah(nominal):
+    return f"Rp{nominal:,}"
 
-# --- KRITERIA: FUNCTION (Fungsi Mandiri) ---
-def cetak_garis():
-    print("-" * 50)
-
-def main():
-    # --- KRITERIA: LIST (Menyimpan objek produk) ---
-    katalog = [
-        ProdukElektronik("L01", "Laptop Gaming ASUS", "Laptop", 15000000),
-        ProdukElektronik("H02", "Smartphone Samsung S23", "Handphone", 12000000),
-        ProdukElektronik("T03", "Smart TV LG 43 Inch", "Elektronik Rumah", 5000000)
+# Inisialisasi List (KRITERIA: LIST)
+if 'katalog' not in st.session_state:
+    st.session_state.katalog = [
+        Produk("L01", "Laptop Gaming", 15000000),
+        Produk("H02", "Smartphone S23", 12000000),
+        Produk("T03", "Smart TV 4K", 5000000)
     ]
+
+st.title("🏪 UAS Toko Elektronik")
+
+# --- KRITERIA: PERCABANGAN (Menu via Sidebar) ---
+menu = st.sidebar.selectbox("Navigasi Menu", ["Lihat Katalog", "Tambah Produk Baru"])
+
+if menu == "Lihat Katalog":
+    st.header("Katalog Produk Saat Ini")
     
-    keranjang = []
+    # Menampilkan data dalam bentuk tabel agar rapi
+    data_tabel = []
+    # --- KRITERIA: PERULANGAN ---
+    for p in st.session_state.katalog:
+        data_tabel.append({
+            "Kode": p.kode.upper(), # KRITERIA: STRING
+            "Nama Produk": p.nama,
+            "Harga": format_rupiah(p.harga)
+        })
+    st.table(data_tabel)
 
-    # --- KRITERIA: PERULANGAN (While Loop) ---
-    berjalan = True
-    while berjalan:
-        print("\n=== AMIKOM ELECTRONIC STORE ===")
-        print("1. Lihat Katalog Produk")
-        print("2. Tambah Barang ke Keranjang")
-        print("3. Checkout & Keluar")
+elif menu == "Tambah Produk Baru":
+    st.header("Input Data Elektronik")
+    
+    # Mengganti input() terminal dengan widget Streamlit
+    with st.form("form_input"):
+        new_kode = st.text_input("Masukkan Kode (Contoh: B01)")
+        new_nama = st.text_input("Nama Barang")
+        new_harga = st.number_input("Harga Barang", min_value=0)
         
-        # --- KRITERIA: PERCABANGAN (If-Else) ---
-        pilihan = input("Pilih menu (1/2/3): ")
-
-        if pilihan == "1":
-            print("\nDAFTAR PRODUK:")
-            cetak_garis()
-            # Perulangan (For Loop) untuk list
-            for produk in katalog:
-                print(produk.detail_produk())
-            cetak_garis()
-
-        elif pilihan == "2":
-            cari_kode = input("Masukkan Kode Produk (contoh: L01): ").strip().upper()
-            ditemukan = False
-            for produk in katalog:
-                if produk.kode == cari_kode:
-                    keranjang.append(produk)
-                    print(f"Berhasil menambahkan {produk.nama} ke keranjang!")
-                    ditemukan = True
-                    break
-            if not ditemukan:
-                print("Maaf, kode produk tidak ditemukan.")
-
-        elif pilihan == "3":
-            if not keranjang:
-                print("Keranjang kosong. Terima kasih!")
+        submit = st.form_submit_button("Simpan Barang")
+        
+        if submit:
+            if new_kode and new_nama:
+                # Membuat objek baru (OOP)
+                produk_baru = Produk(new_kode, new_nama, new_harga)
+                # Menambah ke list
+                st.session_state.katalog.append(produk_baru)
+                st.success(f"Barang '{new_nama}' berhasil ditambahkan!")
             else:
-                print("\nRINGKASAN BELANJA ANDA:")
-                total = 0
-                for item in keranjang:
-                    print(f"- {item.nama} : Rp{item.harga:,}")
-                    total += item.harga
-                print(f"TOTAL PEMBAYARAN: Rp{total:,}")
-                print("Terima kasih telah berbelanja!")
-            berjalan = False # Menghentikan perulangan
-
-        else:
-            print("Pilihan menu tidak valid, silakan coba lagi.")
-
-if __name__ == "__main__":
-    main()
+                st.error("Semua kolom harus diisi!")
